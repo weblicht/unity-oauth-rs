@@ -1,0 +1,14 @@
+{
+    "require": {
+        "fkooman/oauth-common": "0.5.*",
+        "guzzle/guzzle": "~3.9"
+    },
+
+    "require-dev": {
+        "phpunit/phpunit": "4.8.*"
+    },
+
+    "autoload": {
+        "psr-0": { "weblicht\\OAuth\\ResourceServer\\": "src/" }
+    }
+}
