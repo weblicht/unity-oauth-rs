@@ -10,7 +10,7 @@ namespace weblicht\OAuth\ResourceServer;
 
 use fkooman\OAuth\Common\Scope;
 
-class UnityTokeninfo
+class UnityTokenintrospection
 {
     private $responseToken;
     private $responseUser;
@@ -116,7 +116,7 @@ class UnityTokeninfo
     /**
      * Get the complete response from the tokeninfo endpoint
      */
-    public function getToken()
+    public function getTokeninfo()
     {
         return $this->responseToken;
     }
@@ -126,7 +126,7 @@ class UnityTokeninfo
      * @return array
      * Get the complete response from the userinfo endpoint
      */
-    public function getUser()
+    public function getUserinfo()
     {
         return $this->responseUser;
     }

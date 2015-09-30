@@ -9,8 +9,9 @@
 namespace weblicht\OAuth\ResourceServer;
 
 
-use Guzzle\Common\Exception\RuntimeException;
-use Guzzle\Http\Client;
+use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\TransferException;
 
 class UnityResourceServer
 {
@@ -64,20 +65,13 @@ class UnityResourceServer
         $this->validateTokenSyntax(substr($this->authorizationHeader, 7));
 
         try {
-            $requestTokeninfo = $this->httpClientToken->get();
-            $requestTokeninfo->addHeader("Authroization", $this->authorizationHeader);
-            $requestUserinfo = $this->httpClientUser->get();
-            $requestUserinfo->addHeader("Authorization", $this->authorizationHeader);
-            $responseTokeninfo = $requestTokeninfo->send();
-            $responseUserinfo = $requestUserinfo->send();
+            $responseTokeninfo = $this->httpClientToken->get('/', ['Authorization' => $this->authorizationHeader]);
+            $responseUserinfo = $this->httpClientUser->get('/', ['Authorization' => $this->authorizationHeader]);
 
-            /* Unity AS returns HTTP 401 if the token is not valid or has expired */
-            if ($responseTokeninfo->getStatusCode() !== 200) {
-                throw new ResourceServerException("invalid_token", "the access token has expired or not active");
-            }
-
-            $responseDataTokeninfo = $responseTokeninfo->json();
-            $responseDataUserinfo = $responseUserinfo->json();
+            $responseDataTokeninfo = json_decode((string)$responseTokeninfo->getBody(), true);
+            $responseDataUserinfo = json_decode((string)$responseUserinfo->getBody(), true);
+            print_r($responseDataTokeninfo);
+            print_r($responseDataUserinfo);
             if (!is_array($responseDataTokeninfo) || !is_array($responseDataUserinfo)) {
                 throw new ResourceServerException(
                     "internal_server_error",
@@ -85,10 +79,13 @@ class UnityResourceServer
                 );
             }
 
-            $tokenIntrospection = new UnityTokeninfo($responseData);
+            $tokenIntrospection = new UnityTokenintrospection($responseDataTokeninfo, $responseDataUserinfo);
 
             return $tokenIntrospection;
-        } catch (RuntimeException $e) {
+        } catch (ClientException $e) {
+            /* Unity AS returns HTTP 401 if the token is not valid or has expired */
+            throw new ResourceServerException("invalid_token", "the access token has expired or not active");
+        } catch (TransferException $e) {
             throw new ResourceServerException(
                 "internal_server_error",
                 "unable to contact introspection endpoint or malformed response data"
