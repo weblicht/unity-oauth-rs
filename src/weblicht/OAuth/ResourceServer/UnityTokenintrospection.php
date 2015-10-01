@@ -95,6 +95,11 @@ class UnityTokenintrospection
         }
     }
 
+    public function getEppn()
+    {
+        return $this->getKeyValue('EPPN');
+    }
+
     /**
      * OPTIONAL.  Service-specific string identifier or list of string
      * identifiers representing the intended audience for this token.
