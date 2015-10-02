@@ -59,18 +59,13 @@ class UnityResourceServer
         }
 
         $this->validateTokenSyntax(substr($this->authorizationHeader, 7));
-        print_r($this->authorizationHeader);
 
         try {
             $responseTokeninfo = $this->httpClient->get('tokeninfo', [ 'headers' => ['Authorization' => $this->authorizationHeader]]);
             $responseUserinfo = $this->httpClient->get('userinfo', [ 'headers' => ['Authorization' => $this->authorizationHeader]]);
-            print_r($responseTokeninfo->getBody());
-            print_r($responseUserinfo->getBody());
 
             $responseDataTokeninfo = json_decode((string)$responseTokeninfo->getBody(), true);
             $responseDataUserinfo = json_decode((string)$responseUserinfo->getBody(), true);
-            print_r($responseDataTokeninfo);
-            print_r($responseDataUserinfo);
             if (!is_array($responseDataTokeninfo) || !is_array($responseDataUserinfo)) {
                 throw new ResourceServerException(
                     "internal_server_error",
@@ -84,7 +79,11 @@ class UnityResourceServer
         } catch (ClientException $e) {
             /* Unity AS returns HTTP 401 if the token is not valid or has expired */
             $response = $e->getResponse();
-            throw new ResourceServerException("invalid_token", "the access token has expired or not active");
+            if($response->getStatusCode() === 401) {
+                throw new ResourceServerException("invalid_token", "the access token has expired or not active");
+            } else {
+                throw new ResourceServerException("internal_server_error", "unable to contact introspection endpoint or malformed response data");
+            }
         } catch (TransferException $e) {
             throw new ResourceServerException(
                 "internal_server_error",
