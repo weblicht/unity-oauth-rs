@@ -16,10 +16,7 @@ use GuzzleHttp\Exception\TransferException;
 class UnityResourceServer
 {
     /* @var Client */
-    private $httpClientToken;
-
-    /* @var Client */
-    private $httpClientUser;
+    private $httpClient;
 
     /* @var string|null */
     private $authorizationHeader;
@@ -30,10 +27,9 @@ class UnityResourceServer
      * @param Client $httpClientUser
      * the client pointing to the userinfo endpoint
      */
-    public function __construct(Client $httpClientToken, Client $httpClientUser)
+    public function __construct(Client $httpClient)
     {
-        $this->httpClientToken = $httpClientToken;
-        $this->httpClientUser = $httpClientUser;
+        $this->httpClient= $httpClient;
         $this->authorizationHeader = null;
     }
 
@@ -63,10 +59,13 @@ class UnityResourceServer
         }
 
         $this->validateTokenSyntax(substr($this->authorizationHeader, 7));
+        print_r($this->authorizationHeader);
 
         try {
-            $responseTokeninfo = $this->httpClientToken->get('/', ['Authorization' => $this->authorizationHeader]);
-            $responseUserinfo = $this->httpClientUser->get('/', ['Authorization' => $this->authorizationHeader]);
+            $responseTokeninfo = $this->httpClient->get('tokeninfo', [ 'headers' => ['Authorization' => $this->authorizationHeader]]);
+            $responseUserinfo = $this->httpClient->get('userinfo', [ 'headers' => ['Authorization' => $this->authorizationHeader]]);
+            print_r($responseTokeninfo->getBody());
+            print_r($responseUserinfo->getBody());
 
             $responseDataTokeninfo = json_decode((string)$responseTokeninfo->getBody(), true);
             $responseDataUserinfo = json_decode((string)$responseUserinfo->getBody(), true);
@@ -84,6 +83,7 @@ class UnityResourceServer
             return $tokenIntrospection;
         } catch (ClientException $e) {
             /* Unity AS returns HTTP 401 if the token is not valid or has expired */
+            $response = $e->getResponse();
             throw new ResourceServerException("invalid_token", "the access token has expired or not active");
         } catch (TransferException $e) {
             throw new ResourceServerException(

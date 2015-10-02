@@ -12,6 +12,7 @@ namespace weblicht\OAuth\ResourceServer;
 use GuzzleHttp\Client;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7;
 use PHPUnit_Framework_TestCase;
@@ -28,10 +29,12 @@ class UnityResourceServerTest extends PHPUnit_Framework_TestCase
         ]);
         $handler = HandlerStack::create($mock);
 
-        $clientToken = new Client(['base_uri'=> 'http://example.org/tokeninfo', 'handler' => $handler]);
-        $clientUser = new Client(['base_uri'=> 'http://example.org/userinfo', 'handler' => $handler]);
+//        $clientToken = new Client(['base_uri'=> 'http://weblicht.sfs.uni-tuebingen.de/oauth2/tokeninfo', 'handler' => $handler]);
+        $clientToken = new Client(['base_uri'=> 'https://weblicht.sfs.uni-tuebingen.de/oauth2/tokeninfo']);
+//        $clientUser = new Client(['base_uri'=> 'http://example.org/oauth2/userinfo', 'handler' => $handler]);
+        $clientUser = new Client(['base_uri'=> 'https://weblicht.sfs.uni-tuebingen.de/oauth2/userinfo']);
         $rs = new UnityResourceServer($clientToken, $clientUser);
-        $rs->setAuthorizationHeader("Bearer KO6LhTjR2RZlviaVxDvSp-xuGU0LuC2qW1tpY52wplE");
+        $rs->setAuthorizationHeader("Bearer ThFD5mMv5nTcytNlEDa3N5pfBasy7C4gAFL8X9ffwrQ");
         echo("Haha");
         $rs->verifyToken();
     }
@@ -47,11 +50,23 @@ class UnityResourceServerTest extends PHPUnit_Framework_TestCase
                                                                 'email' => 'wei@qiu.es'])))
         ]);
         $handler = HandlerStack::create($mock);
-        $clientToken = new Client(['base_uri'=> 'http://example.org/tokeninfo', 'handler' => $handler]);
-        $clientUser = new Client(['base_uri'=> 'http://example.org/userinfo', 'handler' => $handler]);
-        $rs = new UnityResourceServer($clientToken, $clientUser);
-        $rs->setAuthorizationHeader("Bearer KO6LhTjR2RZlviaVxDvSp-xuGU0LuC2qW1tpY52wplE");
+        $client = new Client(['base_uri'=> 'http://weblicht.sfs.uni-tuebingen.de/oauth2/', 'handler' => $handler]);
+//        $clientToken = new Client(['base_uri'=> 'https://weblicht.sfs.uni-tuebingen.de/oauth2/tokeninfo']);
+//        $clientUser = new Client(['base_uri'=> 'https://weblicht.sfs.uni-tuebingen.de/oauth2/userinfo']);
+        $rs = new UnityResourceServer($client);
+        $rs->setAuthorizationHeader("Bearer urn8IyQktx_o4_upDnewvc2N4Gda55UT-TY0tnR4guw");
         $this->assertInstanceOf("weblicht\\OAuth\\ResourceServer\\UnityTokenIntrospection", $rs->verifyToken());
     }
 
+    public function testValidTokenRequestHistory(){
+        $container = [];
+        $history = Middleware::history($container);
+        $stack = HandlerStack::create();
+        $stack->push($history);
+        $client = new Client(['base_uri'=> 'https://weblicht.sfs.uni-tuebingen.de/', 'handler' => $stack]);
+        $authorizationHeader = 'Bearer urn8IyQktx_o4_upDnewvc2N4Gda55UT-TY0tnR4guw';
+        $responseTokeninfo = $client->get('', ['headers' => ['Authorization' => 'haha']]);
+        $responseUserinfo = $client->get('', ['headers' => ['Authorization' => $authorizationHeader]]);
+
+    }
 }
